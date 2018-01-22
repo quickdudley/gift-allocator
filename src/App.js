@@ -3,10 +3,16 @@ import './App.css';
 import closebox from './close.svg';
 
 class Participant extends Component {
+  removeThis() {
+    this.props.root.deleteParticipant(this.props.object.number);
+  }
+
   render() {
     return (
-      <div classname="Participant">
-      <img src={closebox} alt="Remove" className="closeBox"/>{this.props.object.name}</div>
+      <div className="Participant">
+      <span onClick={e => {this.removeThis()}}>
+      <img src={closebox} alt="Remove" className="closeBox"
+        /></span>{this.props.object.name}</div>
     );
   }
 }
@@ -40,8 +46,9 @@ class ListEdit extends Component {
         this.setState({name: ""});
        }}
      ];
+    var key = 0;
     btns = btns.map(btn => {
-      return (<button onClick={btn.action}>{btn.title}</button>)
+      return (<button onClick={btn.action} key={key++}>{btn.title}</button>)
      });
     return (<div className="ListEdit">
       <input type="text" value={this.state.name}
@@ -65,11 +72,19 @@ class App extends Component {
     this.state.participants.push(participant);
     this.setState({number: sn + 1});
   }
+
+  deleteParticipant(number) {
+    var i = this.state.participants.find(p => {
+      return p.number === number;
+     });
+    this.state.participants.splice(i,1);
+    this.forceUpdate();
+  }
   
   render() {
     var participants = [];
     for (let p of this.state.participants) {
-      participants.push(<Participant object={p} key={p.number} />);
+      participants.push(<Participant object={p} root={this} key={p.number} />);
      }
     return (
       <div className="App">
