@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import './App.css';
+import closebox from './close.svg';
 
 class Participant extends Component {
   render() {
     return (
-      <div classname="Participant">{this.props.object.name}</div>
+      <div classname="Participant">
+      <img src={closebox} alt="Remove" className="closeBox"/>{this.props.object.name}</div>
     );
   }
 }
