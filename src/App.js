@@ -58,11 +58,11 @@ class ListEdit extends Component {
 
 class Assignment extends Component {
   render () {
-    return (<p><a
+    return (<div><a
       href={this.props.blob}
       className={this.props.stale ? "staleAssignment" : "assignment"}
       download={this.props.name + ".txt"}
-      >{this.props.name}</a></p>)
+      >{this.props.name}</a></div>)
   }
 }
 
@@ -150,7 +150,7 @@ class App extends Component {
     if(this.state.allocs.length > 0) {
       allocations.push(<h3>
         Allocations{this.state.staleAllocs ?
-          <span className="staleTitle">&nbsp;(old: click &quot;Do Allocations&quot; to refresh)</span> :
+          <span className="staleTitle">&nbsp;(click &quot;Do Allocations&quot; to refresh)</span> :
           ""}</h3>);
      }
     for (let a of this.state.allocs) {
