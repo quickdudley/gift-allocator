@@ -8,6 +8,7 @@ class Participant extends Component {
   }
 
   selectThis() {
+    console.log(this);
     this.props.root.selectParticipant(this.props.object);
   }
 
@@ -19,7 +20,13 @@ class Participant extends Component {
         /></span><span
         className={this.props.object.selected ? "selectedParticipant" : ""}
         onClick={e => {this.selectThis();}}
-        >{this.props.object.name}</span></div>
+        >{this.props.object.name}{
+        this.props.object.assistance ?
+          <span className="assistanceNote">&nbsp;{
+            "{" + this.props.object.assistance.join(", ") + "}"
+          }</span> :
+          ""
+        }</span></div>
     );
   }
 }
@@ -162,7 +169,7 @@ class App extends Component {
         i = Math.floor(Math.random() * assistance.length);
         assistance = assistance[i];
         for(let d2 of newAllocs[donor.name]) {
-          newAllocs[assistance][d2 === "Your" ? donor.name + "\'s" : d2] =
+          newAllocs[assistance][d2 === "Your" ? donor.name + "'s" : d2] =
             newAllocs[donor.name][d2];
         }
         delete newAllocs[donor.name];
