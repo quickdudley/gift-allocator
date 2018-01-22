@@ -11,7 +11,16 @@
   float: left;
 }
 
+.allocationsList {
+  width: 50%;
+  float: left;
+}
+
 .closeBox {
   padding-bottom: 2px;
   vertical-align: middle;
+}
+
+.twoPanel {
+  overflow: auto;
 }
