@@ -7,12 +7,19 @@ class Participant extends Component {
     this.props.root.deleteParticipant(this.props.object.number);
   }
 
+  selectThis() {
+    this.props.root.selectParticipant(this.props.object);
+  }
+
   render() {
     return (
       <div className="Participant">
       <span onClick={e => {this.removeThis();}}>
       <img src={closebox} alt="Remove" className="closeBox"
-        /></span>{this.props.object.name}</div>
+        /></span><span
+        className={this.props.object.selected ? "selectedParticipant" : ""}
+        onClick={e => {this.selectThis();}}
+        >{this.props.object.name}</span></div>
     );
   }
 }
@@ -21,7 +28,7 @@ class ListEdit extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: ""
+      name: this.props.editing ? this.props.editing.name : ""
      };
   }
 
@@ -33,11 +40,25 @@ class ListEdit extends Component {
     this.props.root.addParticipant({name: this.state.name});
     this.setState({name: ""});
   }
+
+  doDeselect() {
+    this.props.root.deselectParticipant();
+  }
+
+  doSave() {
+    this.props.editing.name = this.state.name;
+    this.props.root.deselectParticipant();
+    this.setState({name: ""});
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({name: nextProps.editing ? nextProps.editing.name : ""});
+  }
   
   render() {
     var btns = this.props.editing ? [
-      {title: "Cancel", action: () => {}},
-      {title: "Save", action: () => {}}
+      {title: "Cancel", action: () => {this.doDeselect();}},
+      {title: "Save", action: () => {this.doSave();}}
      ] : [
       {title: "Add", action: () => {this.doAdd()}},
       {title: "Clear", action: () => {
@@ -51,7 +72,10 @@ class ListEdit extends Component {
     return (<div className="ListEdit">
       <input type="text" value={this.state.name}
         onChange={e => {this.changeName(e)}}
-        onKeyUp={e => {if(e.keyCode===13){this.doAdd()}}}/>
+        onKeyUp={e => {if(e.keyCode===13){
+          if(this.props.editing){this.doSave();}
+          else {this.doAdd();}
+          }}}/>
       <div>{btns}</div></div>);
   }
 }
@@ -73,7 +97,8 @@ class App extends Component {
       participants: [],
       number: 0,
       allocs: [],
-      staleAllocs: true
+      staleAllocs: true,
+      participantSelected: false
      }
   }
 
@@ -90,6 +115,21 @@ class App extends Component {
      });
     this.state.participants.splice(i,1);
     this.setState({staleAllocs: true});
+  }
+
+  selectParticipant(participant) {
+    for(let p of this.state.participants) {
+      p.selected = false;
+    }
+    participant.selected = true;
+    this.setState({participantSelected: participant});
+  }
+
+  deselectParticipant() {
+    for(let p of this.state.participants) {
+      p.selected = false;
+    }
+    this.setState({participantSelected: false});
   }
 
   doAllocation() {
@@ -113,16 +153,16 @@ class App extends Component {
       }
       if(unallocated.length === 0) break;
     }
-    var deleteList = [];
     for(donor of this.state.participants) {
       if(donor.assistance) {
+        // eslint-disable-next-line
         var assistance = donor.assistance.filter(a => {
           return newAllocs[donor.name]["Your"] !== a;
         });
         i = Math.floor(Math.random() * assistance.length);
         assistance = assistance[i];
         for(let d2 of newAllocs[donor.name]) {
-          newAllocs[assistance][d2 === "Your" ? donor.name : d2] =
+          newAllocs[assistance][d2 === "Your" ? donor.name + "\'s" : d2] =
             newAllocs[donor.name][d2];
         }
         delete newAllocs[donor.name];
@@ -166,7 +206,7 @@ class App extends Component {
        <div className="participantList">
          <h3>Participants</h3>
          {participants}
-         <ListEdit root={this} />
+         <ListEdit root={this} editing={this.state.participantSelected} />
        </div>
        <div className="allocationsList">
          {allocations}

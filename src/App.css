@@ -37,3 +37,7 @@
 .finalButton {
   text-align: center;
 }
+
+.selectedParticipant {
+  background-color: #c0c0c0;
+}
