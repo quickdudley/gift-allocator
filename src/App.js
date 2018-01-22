@@ -56,13 +56,24 @@ class ListEdit extends Component {
   }
 }
 
+class Assignment extends Component {
+  render () {
+    return (<a
+      href={this.props.blob}
+      className={this.props.stale ? "staleAssignment" : "assignment"}
+      download={this.props.name + ".txt"}
+      >{this.props.name}</a>)
+  }
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       participants: [],
       number: 0,
-      allocs: []
+      allocs: [],
+      staleAllocs: true
      }
   }
 
@@ -70,7 +81,7 @@ class App extends Component {
     var sn = this.state.number;
     participant.number = sn;
     this.state.participants.push(participant);
-    this.setState({number: sn + 1});
+    this.setState({number: sn + 1, staleAllocs: true});
   }
 
   deleteParticipant(number) {
@@ -78,7 +89,7 @@ class App extends Component {
       return p.number === number;
      });
     this.state.participants.splice(i,1);
-    this.forceUpdate();
+    this.setState({staleAllocs: true});
   }
 
   doAllocation() {
@@ -105,27 +116,49 @@ class App extends Component {
     for(let a in newAllocs) {
       var s = "";
       for(donor in newAllocs[a]) {
-        s += donor + " recipient is " + newAllocs[a][donor] + "\n";
+        s += donor + " recipient is " + newAllocs[a][donor] + "\r\n";
       }
       doneAllocs.push({
         blob: window.URL.createObjectURL(new Blob([s],{type:"text/plain"})),
         name: a
        });
     }
-    this.setState({allocs: doneAllocs});
+    this.setState({allocs: doneAllocs, staleAllocs: false});
   }
 
   render() {
     var participants = [];
+    var allocations = [];
     for (let p of this.state.participants) {
       participants.push(<Participant object={p} root={this} key={p.number} />);
      }
+    if(this.state.allocs.length > 0) {
+      allocations.push(<h3>
+        Allocations{this.state.staleAllocs ?
+          <span className="staleTitle">&nbsp;(old: click &quot;Do Allocations&quot; to refresh)</span> :
+          ""}</h3>);
+     }
+    for (let a of this.state.allocs) {
+      allocations.push(<Assignment
+        blob={a.blob}
+        name={a.name}
+        stale={this.state.staleAllocs} />);
+     }
     return (
       <div className="App">
+       <div className="twoPanel">
        <div className="participantList">
-       <h3>Participants</h3>
-       {participants}
-       <ListEdit root={this}/></div>
+         <h3>Participants</h3>
+         {participants}
+         <ListEdit root={this} />
+       </div>
+       <div className="allocationsList">
+         {allocations}
+       </div>
+       </div>
+       <div className="finalButton">
+         <button>Do Allocations</button>
+       </div>
       </div>
     );
   }
