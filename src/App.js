@@ -30,11 +30,52 @@ class Participant extends Component {
   }
 }
 
+class AssistanceEdit extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {selected: {}};
+  }
+
+  componentWillReceiveProps(nextProps) {
+    var newSelected = {};
+    if(nextProps.parent.assistance) {
+      for(let i of nextProps.parent.assistance) {
+        newSelected[i] = true;
+      }
+    }
+  }
+
+  updateChecked() {
+    var l = [];
+    for(let i in this.state.selected) {
+      if(this.state.selected[i]) {
+        l.push(i);
+      }
+    }
+    this.props.parent.setAssistance(l);
+  }
+  
+  render() {
+    var names = this.props.root.participantNames()
+      .filter(n => {return this.props.name !== n})
+      .map(n => {return (<div key={n}><input
+        type="checkbox"
+        onChange={e => {
+          this.state.selected[n] = e.target.checked;
+          this.updateChecked();
+        }}
+        />{n}</div>)});
+    return (<div className="assistanceList"
+      >{names}</div>);
+  }
+}
+
 class ListEdit extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: this.props.editing ? this.props.editing.name : ""
+      name: this.props.editing ? this.props.editing.name : "",
+      assistance: null
      };
   }
 
@@ -43,7 +84,10 @@ class ListEdit extends Component {
   }
 
   doAdd(e) {
-    this.props.root.addParticipant({name: this.state.name});
+    this.props.root.addParticipant({
+      name: this.state.name,
+      assistance: this.state.assistance
+    });
     this.setState({name: ""});
   }
 
@@ -53,12 +97,19 @@ class ListEdit extends Component {
 
   doSave() {
     this.props.editing.name = this.state.name;
+    this.props.editing.assistance = this.state.assistance;
     this.props.root.deselectParticipant();
-    this.setState({name: ""});
+    this.setState({name: "", assistance: null});
+  }
+
+  setAssistance(a) {
+    this.setState({assistance: a});
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({name: nextProps.editing ? nextProps.editing.name : ""});
+    this.setState({
+      name: nextProps.editing ? nextProps.editing.name : "",
+      assistance: nextProps.editing ? nextProps.editing.assistance : null});
   }
   
   render() {
@@ -76,12 +127,30 @@ class ListEdit extends Component {
       return (<button onClick={btn.action} key={key++}>{btn.title}</button>)
      });
     return (<div className="ListEdit">
-      <input type="text" value={this.state.name}
+      <div className="editRow">
+      <div className="editLabel">Name:</div>
+      <div className="editFields">
+       <input type="text" value={this.state.name}
         onChange={e => {this.changeName(e)}}
         onKeyUp={e => {if(e.keyCode===13){
           if(this.props.editing){this.doSave();}
           else {this.doAdd();}
-          }}}/>
+          }}}/></div>
+      </div>
+      <div className="editRow">
+      <div className="editLabel">Assistance required:</div>
+      <div className="editFields">
+      <input type="checkbox"
+        checked={this.state.assistance !== null}
+        onChange={e => {
+          console.log(e.target.value);
+          this.setState({assistance: e.target.checked ? [] : null});
+          }} />
+      {this.state.assistance !== null ?
+        <AssistanceEdit parent={this} root={this.props.root}/> :
+        ""}
+      </div>
+      </div>
       <div>{btns}</div></div>);
   }
 }
@@ -138,6 +207,12 @@ class App extends Component {
     this.setState({participantSelected: false});
   }
 
+  participantNames() {
+    return this.state.participants.map(participant => {
+      return participant.name;
+    });
+  }
+
   doAllocation() {
     var existingAllocs = this.state.allocs;
     var newAllocs = {};
@@ -165,6 +240,9 @@ class App extends Component {
         var assistance = donor.assistance.filter(a => {
           return newAllocs[donor.name]["Your"] !== a;
         });
+        if(assistance.length === 0) {
+          assistance = donor.assistance.slice();
+        }
         i = Math.floor(Math.random() * assistance.length);
         assistance = assistance[i];
         for(let d2 in newAllocs[donor.name]) {
@@ -177,7 +255,9 @@ class App extends Component {
     for(let a in newAllocs) {
       var s = "";
       for(donor in newAllocs[a]) {
-        s += donor + " recipient is " + newAllocs[a][donor] + "\r\n";
+        let recipient = newAllocs[a][donor];
+        s += donor + " recipient is " +
+          (recipient === a ? "you" : recipient) + "\r\n";
       }
       doneAllocs.push({
         blob: window.URL.createObjectURL(new Blob([s],{type:"text/plain"})),
