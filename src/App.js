@@ -8,7 +8,6 @@ class Participant extends Component {
   }
 
   selectThis() {
-    console.log(this);
     this.props.root.selectParticipant(this.props.object);
   }
 
@@ -168,7 +167,7 @@ class App extends Component {
         });
         i = Math.floor(Math.random() * assistance.length);
         assistance = assistance[i];
-        for(let d2 of newAllocs[donor.name]) {
+        for(let d2 in newAllocs[donor.name]) {
           newAllocs[assistance][d2 === "Your" ? donor.name + "'s" : d2] =
             newAllocs[donor.name][d2];
         }
