@@ -58,11 +58,11 @@ class ListEdit extends Component {
 
 class Assignment extends Component {
   render () {
-    return (<a
+    return (<p><a
       href={this.props.blob}
       className={this.props.stale ? "staleAssignment" : "assignment"}
       download={this.props.name + ".txt"}
-      >{this.props.name}</a>)
+      >{this.props.name}</a></p>)
   }
 }
 
@@ -144,6 +144,7 @@ class App extends Component {
         name={a.name}
         stale={this.state.staleAllocs} />);
      }
+    var insufficient = this.state.participants.length < 2;
     return (
       <div className="App">
        <div className="twoPanel">
@@ -157,7 +158,11 @@ class App extends Component {
        </div>
        </div>
        <div className="finalButton">
-         <button>Do Allocations</button>
+         <button
+           disabled={insufficient}
+           onClick={() => {this.doAllocation();}}>Do Allocations</button>
+         {insufficient ?
+          <p className="needtwo">At least two participants are needed</p> : ""}
        </div>
       </div>
     );

@@ -24,3 +24,16 @@
 .twoPanel {
   overflow: auto;
 }
+
+.staleTitle {
+  color: gray;
+  font-weight: normal;
+}
+
+.staleAssignment {
+  color: gray;
+}
+
+.finalButton {
+  text-align: center;
+}
