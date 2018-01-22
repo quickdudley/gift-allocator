@@ -113,6 +113,21 @@ class App extends Component {
       }
       if(unallocated.length === 0) break;
     }
+    var deleteList = [];
+    for(donor of this.state.participants) {
+      if(donor.assistance) {
+        var assistance = donor.assistance.filter(a => {
+          return newAllocs[donor.name]["Your"] !== a;
+        });
+        i = Math.floor(Math.random() * assistance.length);
+        assistance = assistance[i];
+        for(let d2 of newAllocs[donor.name]) {
+          newAllocs[assistance][d2 === "Your" ? donor.name : d2] =
+            newAllocs[donor.name][d2];
+        }
+        delete newAllocs[donor.name];
+      }
+    }
     for(let a in newAllocs) {
       var s = "";
       for(donor in newAllocs[a]) {
