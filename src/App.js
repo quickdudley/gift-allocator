@@ -147,7 +147,8 @@ class ListEdit extends Component {
           this.setState({assistance: e.target.checked ? [] : null});
           }} />
       {this.state.assistance !== null ?
-        <AssistanceEdit parent={this} root={this.props.root}/> :
+        <AssistanceEdit parent={this} root={this.props.root}
+        name={this.state.name} /> :
         ""}
       </div>
       </div>

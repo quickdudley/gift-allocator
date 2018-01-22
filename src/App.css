@@ -6,6 +6,10 @@
   width: 100%;
 }
 
+.ListEdit {
+  border: 1px solid gray;
+}
+
 .participantList {
   width: 50%;
   float: left;
@@ -44,4 +48,18 @@
 
 .assistanceNote {
   color: #428842;
+}
+
+.editRow {
+  overflow: auto;
+}
+
+.editLabel {
+  width: 30%;
+  float: left;
+}
+
+.editFields {
+  width: 60%;
+  float: left;
 }
