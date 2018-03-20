@@ -3,22 +3,14 @@ import './App.css';
 import closebox from './close.svg';
 
 class Participant extends Component {
-  removeThis() {
-    this.props.root.deleteParticipant(this.props.object.number);
-  }
-
-  selectThis() {
-    this.props.root.selectParticipant(this.props.object);
-  }
-
   render() {
     return (
       <div className="Participant">
-      <span onClick={e => {this.removeThis();}}>
+      <span onClick={this.props.onRemove}>
       <img src={closebox} alt="Remove" className="closeBox"
         /></span><span
         className={this.props.object.selected ? "selectedParticipant" : ""}
-        onClick={e => {this.selectThis();}}
+        onClick={this.props.onSelect}
         >{this.props.object.name}{
         this.props.object.assistance ?
           <span className="assistanceNote">&nbsp;{
@@ -33,16 +25,21 @@ class Participant extends Component {
 class AssistanceEdit extends Component {
   constructor(props) {
     super(props);
-    this.state = {selected: {}};
+    var selected = {};
+//    for(let i of props.parent.state.assistance) {
+//      selected[i] = true;
+//    }
+    this.state = {selected: selected};
   }
 
   componentWillReceiveProps(nextProps) {
     var newSelected = {};
-    if(nextProps.parent.assistance) {
-      for(let i of nextProps.parent.assistance) {
+    if(nextProps.parent.state.assistance) {
+      for(let i of nextProps.parent.state.assistance) {
         newSelected[i] = true;
       }
     }
+    this.setState({selected: newSelected});
   }
 
   updateChecked() {
@@ -61,7 +58,10 @@ class AssistanceEdit extends Component {
       .map(n => {return (<div key={n}><input
         type="checkbox"
         onChange={e => {
-          this.state.selected[n] = e.target.checked;
+          var u = {};
+          u = this.state.selected;
+          u[n] = e.target.checked;
+          this.setState({selected: u});
           this.updateChecked();
         }}
         />{n}</div>)});
@@ -143,7 +143,6 @@ class ListEdit extends Component {
       <input type="checkbox"
         checked={this.state.assistance !== null}
         onChange={e => {
-          console.log(e.target.value);
           this.setState({assistance: e.target.checked ? [] : null});
           }} />
       {this.state.assistance !== null ?
@@ -185,7 +184,7 @@ class App extends Component {
     this.setState({number: sn + 1, staleAllocs: true});
   }
 
-  deleteParticipant(number) {
+  deleteParticipant = (number) => {
     var i = this.state.participants.findIndex(p => {
       return p.number === number;
      });
@@ -193,7 +192,7 @@ class App extends Component {
     this.setState({staleAllocs: true});
   }
 
-  selectParticipant(participant) {
+  selectParticipant = (participant) => {
     for(let p of this.state.participants) {
       p.selected = false;
     }
@@ -272,7 +271,11 @@ class App extends Component {
     var participants = [];
     var allocations = [];
     for (let p of this.state.participants) {
-      participants.push(<Participant object={p} root={this} key={p.number} />);
+      participants.push(<Participant
+        onRemove={this.deleteParticipant}
+        onSelect={this.selectParticipant}
+        object={p}
+        key={p.number} />);
      }
     if(this.state.allocs.length > 0) {
       allocations.push(<h3>
