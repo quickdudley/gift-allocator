@@ -31,11 +31,12 @@ class AssistanceEdit extends Component {
   render() {
     var names = this.props.participantNames
       .filter(n => {return this.props.name !== n})
-      .map(n => {return (<div key={n}><input
+      .map(n => {return (<div key={n} className="assistanceItem">
+        <div className="assistanceName">{n}</div><div className="assistanceCheck"><input
         type="checkbox"
         onChange={e => {this.props.onSet(n,e.target.checked)}}
         checked={this.props.selected.find(a => a === n)}
-        />{n}</div>)});
+        /></div></div>)});
     return (<div className="assistanceList"
       >{names}</div>);
   }
@@ -74,6 +75,7 @@ class ListEdit extends Component {
     this.props.onSave(
       this.props.editing.number,
       {name: this.state.name, assistance: this.state.assistance})
+    this.doDeselect()
   }
 
   render() {
