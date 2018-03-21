@@ -10,7 +10,7 @@ class Participant extends Component {
       <img src={closebox} alt="Remove" className="closeBox"
         /></span><span
         className={this.props.object.selected ? "selectedParticipant" : ""}
-        onClick={this.props.onSelect}
+        onClick={() => { this.props.onSelect(this.props.object) }}
         >{this.props.object.name}{
         this.props.object.assistance ?
           <span className="assistanceNote">&nbsp;{
@@ -25,45 +25,16 @@ class Participant extends Component {
 class AssistanceEdit extends Component {
   constructor(props) {
     super(props);
-    var selected = {};
-//    for(let i of props.parent.state.assistance) {
-//      selected[i] = true;
-//    }
-    this.state = {selected: selected};
+    this.state = {};
   }
 
-  componentWillReceiveProps(nextProps) {
-    var newSelected = {};
-    if(nextProps.parent.state.assistance) {
-      for(let i of nextProps.parent.state.assistance) {
-        newSelected[i] = true;
-      }
-    }
-    this.setState({selected: newSelected});
-  }
-
-  updateChecked() {
-    var l = [];
-    for(let i in this.state.selected) {
-      if(this.state.selected[i]) {
-        l.push(i);
-      }
-    }
-    this.props.parent.setAssistance(l);
-  }
-  
   render() {
-    var names = this.props.root.participantNames()
+    var names = this.props.participantNames
       .filter(n => {return this.props.name !== n})
       .map(n => {return (<div key={n}><input
         type="checkbox"
-        onChange={e => {
-          var u = {};
-          u = this.state.selected;
-          u[n] = e.target.checked;
-          this.setState({selected: u});
-          this.updateChecked();
-        }}
+        onChange={e => {this.props.onSet(n,e.target.checked)}}
+        checked={this.props.selected.find(a => a === n)}
         />{n}</div>)});
     return (<div className="assistanceList"
       >{names}</div>);
@@ -83,35 +54,28 @@ class ListEdit extends Component {
     this.setState({name: e.target.value});
   }
 
-  doAdd(e) {
-    this.props.root.addParticipant({
-      name: this.state.name,
-      assistance: this.state.assistance
-    });
-    this.setState({name: ""});
-  }
-
-  doDeselect() {
-    this.props.root.deselectParticipant();
-  }
-
-  doSave() {
-    this.props.editing.name = this.state.name;
-    this.props.editing.assistance = this.state.assistance;
-    this.props.root.deselectParticipant();
-    this.setState({name: "", assistance: null});
-  }
-
   setAssistance(a) {
     this.setState({assistance: a});
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) { 
     this.setState({
       name: nextProps.editing ? nextProps.editing.name : "",
-      assistance: nextProps.editing ? nextProps.editing.assistance : null});
+      assistance: (nextProps.editing && nextProps.editing.assistance) ? nextProps.editing.assistance : null});
   }
+
+  doAdd = () => {
+    this.props.onAdd({name: this.state.name, assistance: this.state.assistance})
+  }
+
+  doDeselect = this.props.onDeselect
   
+  doSave = () => {
+    this.props.onSave(
+      this.props.editing.number,
+      {name: this.state.name, assistance: this.state.assistance})
+  }
+
   render() {
     var btns = this.props.editing ? [
       {title: "Cancel", action: () => {this.doDeselect();}},
@@ -119,7 +83,7 @@ class ListEdit extends Component {
      ] : [
       {title: "Add", action: () => {this.doAdd()}},
       {title: "Clear", action: () => {
-        this.setState({name: ""});
+        this.setState({name: "", assistance: null});
        }}
      ];
     var key = 0;
@@ -146,7 +110,16 @@ class ListEdit extends Component {
           this.setState({assistance: e.target.checked ? [] : null});
           }} />
       {this.state.assistance !== null ?
-        <AssistanceEdit parent={this} root={this.props.root}
+        <AssistanceEdit
+        onSet={(name,value) => {
+          if(value) {
+            this.setState({assistance: [...this.state.assistance,name]})
+          } else {
+            this.setState({assistance: this.state.assistance.filter(n => n !== name)})
+          }
+        }}
+        selected={this.state.assistance}
+        participantNames={this.props.participantNames}
         name={this.state.name} /> :
         ""}
       </div>
@@ -177,11 +150,13 @@ class App extends Component {
      }
   }
 
-  addParticipant(participant) {
+  addParticipant = (participant) => {
     var sn = this.state.number;
     participant.number = sn;
-    this.state.participants.push(participant);
-    this.setState({number: sn + 1, staleAllocs: true});
+    this.setState({number: sn + 1,
+      staleAllocs: true,
+      participants: [...this.state.participants, participant]
+    });
   }
 
   deleteParticipant = (number) => {
@@ -193,18 +168,34 @@ class App extends Component {
   }
 
   selectParticipant = (participant) => {
-    for(let p of this.state.participants) {
-      p.selected = false;
-    }
-    participant.selected = true;
-    this.setState({participantSelected: participant});
+    participant = {...participant, selected: true};
+    this.setState({
+      participantSelected: participant,
+      participants: this.state.participants.map(p => {
+        if(p.number === participant.number) {
+          return participant
+        } else {
+          return {...p, selected: false}
+        }
+      })
+    });
   }
 
-  deselectParticipant() {
+  deselectParticipant = () => {
     for(let p of this.state.participants) {
       p.selected = false;
     }
     this.setState({participantSelected: false});
+  }
+
+  updateParticipant = (number, nv) => {
+    this.setState({participants: this.state.participants.map(p => {
+      if(p.number === number) {
+        return {...nv, number}
+      } else {
+        return p
+      }
+    })})
   }
 
   participantNames() {
@@ -296,7 +287,13 @@ class App extends Component {
        <div className="participantList">
          <h3>Participants</h3>
          {participants}
-         <ListEdit root={this} editing={this.state.participantSelected} />
+         <ListEdit
+           editing={this.state.participantSelected}
+           participantNames={this.participantNames()}
+           onAdd={this.addParticipant}
+           onDeselect={this.deselectParticipant}
+           onSave={this.updateParticipant}
+           />
        </div>
        <div className="allocationsList">
          {allocations}
